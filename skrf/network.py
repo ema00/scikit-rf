@@ -378,7 +378,7 @@ class Network(object):
 
         Directly from values
 
-        >>> n = rf.Network(f=[1,2,3],s=[1,2,3],z0=[1,2,3])
+        >>> n = rf.Network(f=[1,2,3],s=[1,2,3],z0=[1,2,3],f_unit='ghz')
 
         See Also
         -----------
@@ -433,16 +433,14 @@ class Network(object):
             if name is None and isinstance(file, str):
                 name = os.path.splitext(os.path.basename(file))[0]
 
-        if self.frequency is not None and f_unit is not None:
-            self.frequency.unit = f_unit
-
         # allow properties to be set through the constructor
         for attr in PRIMARY_PROPERTIES + ['frequency', 'z0', 'f', 'noise', 'noise_freq']:
             if attr in kwargs:
                 self.__setattr__(attr, kwargs[attr])
 
+        if self.frequency is not None and f_unit is not None:
+            self.frequency = Frequency.from_f(self.frequency.f, unit=f_unit)
 
-                # self.nports = self.number_of_ports
 
     @classmethod
     def from_z(cls, z, *args, **kw):
@@ -842,7 +840,6 @@ class Network(object):
         Note that indexing starts at 0, so s11 can be accessed by
         taking the slice s[:,0,0].
 
-
         Returns
         ---------
         s : complex :class:`numpy.ndarray` of shape `fxnxn`
@@ -890,7 +887,6 @@ class Network(object):
         Note that indexing starts at 0, so h11 can be accessed by
         taking the slice `h[:,0,0]`.
 
-
         Returns
         ---------
         h : complex :class:`numpy.ndarray` of shape `fxnxn`
@@ -925,7 +921,6 @@ class Network(object):
         Note that indexing starts at 0, so y11 can be accessed by
         taking the slice `y[:,0,0]`.
 
-
         Returns
         ---------
         y : complex :class:`numpy.ndarray` of shape `fxnxn`
@@ -958,7 +953,6 @@ class Network(object):
         `fxnxn`, where `f` is frequency axis and `n` is number of ports.
         Note that indexing starts at 0, so z11 can be accessed by
         taking the slice `z[:,0,0]`.
-
 
         Returns
         ---------
@@ -1000,7 +994,6 @@ class Network(object):
         --------
         t : complex numpy.ndarry of shape `fx2x2`
                 t-parameters, aka scattering transfer parameters
-
 
         See Also
         ------------
@@ -1245,8 +1238,7 @@ class Network(object):
 
     @f.setter
     def f(self, f):
-        tmpUnit = self.frequency.unit
-        self.frequency = Frequency.from_f(f, unit=tmpUnit)
+        self.frequency = Frequency.from_f(f, unit='hz')
 
     @property
     def noisy(self):
@@ -2189,7 +2181,7 @@ class Network(object):
     def interpolate(self, freq_or_n, basis='s', coords='cart',
                     f_kwargs={}, return_array=False, **kwargs):
         """
-        Interpolate a Network allong frequency axis
+        Interpolate a Network along frequency axis
 
         The input 'freq_or_n` can be either a new
         :class:`~skrf.frequency.Frequency` or an `int`, or a new
@@ -2294,7 +2286,7 @@ class Network(object):
                 new_frequency = self.frequency.copy()
                 new_frequency.npoints = n
             elif dim == 1:
-                # input is a array, or list
+                # input is an array, or list
                 new_frequency = Frequency.from_f(freq_or_n, **f_kwargs)
 
         # set new frequency and pull some variables
