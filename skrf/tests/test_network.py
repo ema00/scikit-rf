@@ -137,6 +137,14 @@ class NetworkTestCase(unittest.TestCase):
         tmp = self.ntwk1.copy()
         tmp.f = tmp.f+ tmp.f[0]
         c = rf.stitch(self.ntwk1, tmp)
+        
+    def test_f_setter(self):
+        frequency1 = rf.F.from_f(f=[1, 1.5], unit='ghz')
+        frequency2 = rf.F.from_f(f=[1, 2, 3], unit='ghz')
+        n1 = rf.N(frequency=frequency1, s=[1+2j, 3+4j], z0=1)
+        n2 = rf.N(frequency=frequency2, s=[1+2j, 3+4j, 1+2j], z0=1)
+        n2.f = n1.f
+        self.assertTrue((n2.f == [1e9, 1.5e9]).all())
 
     def test_cascade(self):
         self.assertEqual(self.ntwk1 ** self.ntwk2, self.ntwk3)
@@ -409,31 +417,32 @@ class NetworkTestCase(unittest.TestCase):
         self.assertTrue( ((a+[1+1j,2+2j]).s == npy.array([[[2+3j]],[[5+6j]]])).all())
 
     def test_interpolate(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1, f_unit='ghz')
         freq = rf.F.from_f(npy.linspace(1,2,4), unit='ghz')
         b = a.interpolate(freq)
         # TODO: numerically test for correct interpolation
 
     def test_interpolate_rational(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1, f_unit='ghz')
         freq = rf.F.from_f(npy.linspace(1,2,4), unit='ghz')
         b = a.interpolate(freq, kind='rational')
         # TODO: numerically test for correct interpolation
 
     def test_interpolate_self_npoints(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1, f_unit='ghz')
         a.interpolate_self_npoints(4)
         # TODO: numerically test for correct interpolation
 
     def test_interpolate_from_f(self):
-        a = rf.N(f=[1,2],s=[1+2j, 3+4j],z0=1)
+        a = rf.N(f=[1,2], s=[1+2j, 3+4j], z0=1, f_unit='ghz')
         a.interpolate_from_f(npy.linspace(1,2,4), unit='ghz')
         # TODO: numerically test for correct interpolation
 
     def test_slicer(self):
         a = rf.Network(f=[1,2,4,5,6],
                        s=[1,1,1,1,1],
-                       z0=50 )
+                       z0=50,
+                       f_unit='ghz')
 
         b = a['2-5ghz']
         tinyfloat = 1e-12
@@ -571,7 +580,8 @@ class NetworkTestCase(unittest.TestCase):
 
         b = rf.Network(f=[1, 2],
                        s=[[[0, 1], [1, 0]], [[0, 1], [1, 0]]],
-                       z0=50).interpolate(a.frequency)
+                       z0=50,
+                       f_unit='ghz').interpolate(a.frequency)
         with self.assertRaises(ValueError) as context:
             b.n
         with self.assertRaises(ValueError) as context:
@@ -614,9 +624,9 @@ class NetworkTestCase(unittest.TestCase):
         f1_ =[75.5, 75.5] ; f2_=[75.5, 75.6] ; npt_ = [1,2]     # single freq and multifreq
         for f1,f2,npt in zip (f1_,f2_,npt_) :
           freq=rf.Frequency(f1,f2,npt,'ghz')
-          ntwk4_n = rf.Network(os.path.join(self.test_dir,'ntwk4_n.s2p'), f_unit='GHz').interpolate(freq)
-          ntwk4 = rf.Network(os.path.join(self.test_dir,'ntwk4.s2p'),f_unit='GHz').interpolate(freq)
-          thru = rf.Network(os.path.join(self.test_dir,'thru.s2p'),f_unit='GHz').interpolate(freq)
+          ntwk4_n = rf.Network(os.path.join(self.test_dir,'ntwk4_n.s2p')).interpolate(freq)
+          ntwk4 = rf.Network(os.path.join(self.test_dir,'ntwk4.s2p')).interpolate(freq)
+          thru = rf.Network(os.path.join(self.test_dir,'thru.s2p')).interpolate(freq)
           
           ntwk4_thru = ntwk4 ** thru                  ;ntwk4_thru.name ='ntwk4_thru'
           retrieve_thru =  ntwk4.inv ** ntwk4_thru    ;retrieve_thru.name ='retrieve_thru'
